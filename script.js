@@ -44,8 +44,9 @@ const SEGMENT_COLORS = [
   "#fbbf24"
 ];
 
-const STORAGE_KEY = "dailyMealWheel:userOptions";
-const HIDDEN_STORAGE_KEY = "dailyMealWheel:hiddenDefaultOptions";
+const STORAGE_KEY = "dailyMealWheel:menuState:v2";
+const LEGACY_USER_STORAGE_KEY = "dailyMealWheel:userOptions";
+const LEGACY_HIDDEN_STORAGE_KEY = "dailyMealWheel:hiddenDefaultOptions";
 const TAU = Math.PI * 2;
 
 const canvas = document.getElementById("meal-wheel");
@@ -57,20 +58,31 @@ const menuCount = document.getElementById("menu-count");
 const optionForm = document.getElementById("option-form");
 const optionInput = document.getElementById("option-input");
 const formNote = document.getElementById("form-note");
+const saveStatus = document.getElementById("save-status");
 
-let userOptions = loadUserOptions();
-let hiddenDefaultOptions = loadHiddenDefaultOptions();
-let options = mergeOptions(DEFAULT_OPTIONS, userOptions);
+let options = loadMenuState();
 let rotation = -Math.PI / 2;
 let spinning = false;
 let noteTimer = null;
+let saveTimer = null;
 
-function loadUserOptions() {
-  return loadStoredList(STORAGE_KEY);
+function loadMenuState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return loadLegacyMenuState();
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.options)) return loadLegacyMenuState();
+    return mergeOptions(parsed.options, []);
+  } catch {
+    return loadLegacyMenuState();
+  }
 }
 
-function loadHiddenDefaultOptions() {
-  return loadStoredList(HIDDEN_STORAGE_KEY);
+function loadLegacyMenuState() {
+  const userOptions = loadStoredList(LEGACY_USER_STORAGE_KEY);
+  const hiddenDefaultOptions = loadStoredList(LEGACY_HIDDEN_STORAGE_KEY);
+  const visibleDefaults = DEFAULT_OPTIONS.filter((item) => !hiddenDefaultOptions.includes(item));
+  return mergeOptions(visibleDefaults, userOptions);
 }
 
 function loadStoredList(key) {
@@ -78,25 +90,23 @@ function loadStoredList(key) {
     const raw = localStorage.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isValidOption) : [];
+    return Array.isArray(parsed) ? parsed.filter(isValidOption).map(normalizeOption) : [];
   } catch {
     return [];
   }
 }
 
-function saveUserOptions() {
+function saveMenuState(reason = "已自动保存") {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(userOptions));
+    const payload = {
+      version: 2,
+      options,
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    setSaveStatus(reason);
   } catch {
-    showNote("浏览器没有保存权限，本次新增会暂时保留。");
-  }
-}
-
-function saveHiddenDefaultOptions() {
-  try {
-    localStorage.setItem(HIDDEN_STORAGE_KEY, JSON.stringify(hiddenDefaultOptions));
-  } catch {
-    showNote("浏览器没有保存权限，本次删除会暂时保留。");
+    setSaveStatus("浏览器限制保存，本次修改只在当前页面有效");
   }
 }
 
@@ -120,8 +130,7 @@ function mergeOptions(baseOptions, extraOptions) {
 }
 
 function rebuildOptions() {
-  const visibleDefaults = DEFAULT_OPTIONS.filter((item) => !hiddenDefaultOptions.includes(item));
-  options = mergeOptions(visibleDefaults, userOptions);
+  options = mergeOptions(options, []);
   renderMenu();
   drawWheel();
   updateSpinAvailability();
@@ -276,28 +285,29 @@ function addOption(value) {
     return;
   }
 
-  userOptions.push(normalized);
-  saveUserOptions();
+  options.push(normalized);
+  saveMenuState("已保存新增选项");
   optionInput.value = "";
   rebuildOptions();
   showNote(`已加入：${normalized}`);
 }
 
 function removeOption(option) {
-  const wasCustom = userOptions.includes(option);
-  userOptions = userOptions.filter((item) => item !== option);
-
-  if (!wasCustom) {
-    hiddenDefaultOptions = mergeOptions(hiddenDefaultOptions, [option]);
-  }
-
-  saveUserOptions();
-  saveHiddenDefaultOptions();
+  options = options.filter((item) => item !== option);
+  saveMenuState("已保存删除内容");
   rebuildOptions();
 
   if (resultText.textContent === option) {
     resultText.textContent = options.length > 0 ? "再转一下" : "暂无选项";
   }
+}
+
+function setSaveStatus(message) {
+  saveStatus.textContent = message;
+  window.clearTimeout(saveTimer);
+  saveTimer = window.setTimeout(() => {
+    saveStatus.textContent = "修改会自动保存";
+  }, 2800);
 }
 
 function updateSpinAvailability() {
@@ -331,5 +341,12 @@ optionForm.addEventListener("submit", (event) => {
 
 spinButton.addEventListener("click", spinWheel);
 window.addEventListener("resize", drawWheel);
+window.addEventListener("storage", (event) => {
+  if (event.key !== STORAGE_KEY) return;
+  options = loadMenuState();
+  rebuildOptions();
+  setSaveStatus("已同步其他窗口的修改");
+});
 
 rebuildOptions();
+saveMenuState("菜单已准备好");
