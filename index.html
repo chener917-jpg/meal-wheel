@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今天吃什么</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="wheel-pane" aria-labelledby="app-title">
+      <header class="brand-row">
+        <p class="eyebrow">今日饭点</p>
+        <h1 id="app-title">今天吃什么</h1>
+      </header>
+
+      <div class="wheel-stage">
+        <div class="pointer" aria-hidden="true"></div>
+        <canvas id="meal-wheel" width="720" height="720" aria-label="吃饭选项转盘"></canvas>
+        <div class="wheel-center" aria-hidden="true">
+          <span>开饭</span>
+        </div>
+      </div>
+
+      <button class="spin-button" id="spin-button" type="button">
+        开始转盘
+      </button>
+    </section>
+
+    <aside class="side-pane" aria-label="今日推荐和菜单池">
+      <section class="result-box" aria-live="polite">
+        <p class="eyebrow">今日推荐</p>
+        <p class="result-text" id="result-text">先转一下</p>
+      </section>
+
+      <section class="add-box">
+        <form id="option-form" class="option-form" autocomplete="off">
+          <label for="option-input">新增选项</label>
+          <div class="input-row">
+            <input id="option-input" name="option" type="text" maxlength="18" placeholder="比如：清汤粉">
+            <button class="add-button" type="submit" aria-label="添加选项" title="添加选项">+</button>
+          </div>
+          <p class="form-note" id="form-note" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="menu-box">
+        <div class="menu-heading">
+          <h2>菜单池</h2>
+          <span id="menu-count">0 项</span>
+        </div>
+        <div class="menu-list" id="menu-list" aria-label="当前转盘选项"></div>
+      </section>
+    </aside>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
