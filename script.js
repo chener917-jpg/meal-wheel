@@ -1,30 +1,31 @@
 const DEFAULT_OPTIONS = [
   "沙县小吃",
   "面线糊",
-  "沙拉拉轻食",
   "沙茶面",
-  "木桶饭",
   "塔斯丁",
-  "麦当劳",
-  "食堂",
   "水煮牛肉",
-  "水饺",
-  "馄饨",
-  "卤肉饭",
-  "牛肉羹",
-  "粥",
-  "鱼片粥",
   "沙拉",
-  "番茄鸡蛋面",
-  "清汤面",
-  "鸡汤米线",
-  "越南粉",
-  "关东煮",
-  "蒸蛋套餐",
-  "清蒸鱼饭",
   "轻食三明治",
-  "荞麦面",
-  "蔬菜汤"
+  "轻食沙拉",
+  "轻食烤熟碗",
+  "轻食滑蛋拌饭",
+  "轻食牛肉拌饭",
+  "食堂自选",
+  "食堂刀削面",
+  "玉米鸡蛋",
+  "鸡腿饭",
+  "鸭腿饭",
+  "双拼鸡腿饭",
+  "兰州拉面汤",
+  "馄饨",
+  "水饺",
+  "水煮鱼",
+  "麦当劳1+1",
+  "麦当劳板烧鸡腿堡",
+  "木桶饭 四季豆肉丝饭",
+  "木桶饭 笋干肉丝饭",
+  "木桶饭 尝试新的",
+  "阿伦哥"
 ];
 
 const SEGMENT_COLORS = [
@@ -44,7 +45,7 @@ const SEGMENT_COLORS = [
   "#fbbf24"
 ];
 
-const STORAGE_KEY = "dailyMealWheel:menuState:v2";
+const STORAGE_KEY = "dailyMealWheel:menuState:v3";
 const LEGACY_USER_STORAGE_KEY = "dailyMealWheel:userOptions";
 const LEGACY_HIDDEN_STORAGE_KEY = "dailyMealWheel:hiddenDefaultOptions";
 const TAU = Math.PI * 2;
@@ -99,7 +100,7 @@ function loadStoredList(key) {
 function saveMenuState(reason = "已自动保存") {
   try {
     const payload = {
-      version: 2,
+      version: 3,
       options,
       updatedAt: new Date().toISOString()
     };
